@@ -1,4 +1,3 @@
-
 '''
 ================================================================================
 总体回测前
@@ -18,10 +17,18 @@ def initialize(context):
 def set_params():
     g.tc=15  # 调仓频率
     g.yb=63  # 样本长度
-    g.N=20   # 持仓数目
-    g.factors=['market_cap','pe_ratio' ,'pb_ratio','pcf_ratio','turnover_ratio','pcf_ratio','administration_expense'] # 用户选出来的因子
-    # 因子等权重里1表示因子值越小越好，-1表示因子值越大越好
-    g.weights=[[1], [-1], [-1], [-1], [1], [-1], [-1]]
+    g.N=20   # 持仓数目   
+    factors= ['market_cap','pe_ratio']
+    factor_weight_hashmap = {'market_cap':[1],'pe_ratio':[-1] ,'pb_ratio':[-1],'pcf_ratio':[-1],'turnover_ratio':[1],'administration_expense':[-1]}
+    if isinstance(factors, str):
+        factors = [factors]
+    weights =[factor_weight_hashmap.get(x) for x in factors]
+    
+    g.weights = weights
+    print(factors)
+    print(g.weights)
+    g.factors = factors
+    
     
 
 #设置中间变量
@@ -110,6 +117,7 @@ def set_slip_fee(context):
 '''
 
 def handle_data(context, data):
+     
     if g.if_trade==True:
     # 计算现在的总资产，以分配资金，这里是等额权重分配
         g.everyStock=context.portfolio.portfolio_value/g.N
@@ -118,7 +126,9 @@ def handle_data(context, data):
         # 获得因子排序
         a,b=getRankedFactors(g.factors,todayStr)
         # 计算每个股票的得分
-        points=np.dot(a,g.weights)
+        factor_weight_hashmap = {'market_cap':[1],'pe_ratio':[-1] ,'pb_ratio':[-1],'pcf_ratio':[-1],'turnover_ratio':[1],'administration_expense':[-1]}
+        weights_final =[factor_weight_hashmap.get(x) for x in g.factors]
+        points=np.dot(a,weights_final)
         # 复制股票代码
         stock_sort=b[:]
         # 对股票的得分进行排名
